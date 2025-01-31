@@ -13,8 +13,6 @@ use function method_exists;
 
 class Response extends Message implements ResponseInterface, Psr7StatusCodeInterface
 {
-    protected string $reasonPhrase = '';
-
     protected static array $messages = [
         // Informational 1xx
         StatusCodeInterface::STATUS_CONTINUE => 'Continue',
@@ -91,6 +89,18 @@ class Response extends Message implements ResponseInterface, Psr7StatusCodeInter
         599 => 'Network Connect Timeout Error',
     ];
 
+    protected string $reasonPhrase = '';
+
+    /**
+     * @var \Clicalmani\Psr7\HeadersInterface
+     */
+    protected $headers = null;
+
+    /**
+     * @var \Psr\Http\Message\StreamInterface
+     */
+    protected $body = null;
+
     /**
      * @param int                   $status  The response status code.
      * @param HeadersInterface|null $headers The response headers.
@@ -98,21 +108,12 @@ class Response extends Message implements ResponseInterface, Psr7StatusCodeInter
      */
     public function __construct(
         protected int $status = StatusCodeInterface::STATUS_OK,
-        protected ?HeadersInterface $headers = null,
-        protected ?StreamInterface $body = null
+        ?HeadersInterface $headers = null,
+        ?StreamInterface $body = null
     ) {
         $this->status = $this->filterStatus($status);
-        $this->headers = Headers::fromArray(apache_request_headers());
+        $this->headers = $headers ?: Headers::fromArray([]);
         $this->body = $body ?: Stream::create();
-    }
-
-    /**
-     * This method is applied to the cloned object after PHP performs an initial shallow-copy.
-     * This method completes a deep-copy by creating new objects for the cloned object's internal reference pointers.
-     */
-    public function __clone()
-    {
-        $this->headers = clone $this->headers;
     }
 
     /**

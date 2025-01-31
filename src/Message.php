@@ -68,7 +68,7 @@ class Message implements MessageInterface
         $clone = clone $this;
         $clone->headers[$name] = $value;
 
-        if ($this instanceof Response && $this->body instanceof NoBufferedBody) {
+        if ($this instanceof Response && $this->body instanceof NonBufferedBody) {
             header(sprintf("%s: %s", $name, $clone->headers[$name]->line()));
         }
 
@@ -81,7 +81,7 @@ class Message implements MessageInterface
         $clone = clone $this;
         $clone->headers[] = $new_header;
 
-        if ($this instanceof Response && $this->body instanceof NoBufferedBody) {
+        if ($this instanceof Response && $this->body instanceof NonBufferedBody) {
             header(sprintf("%s: %s", $name, $clone->headers[$name]->line()));
         }
 
