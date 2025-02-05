@@ -23,4 +23,9 @@ class Header implements HeaderInterface
     {
         return implode(',', $this->value);
     }
+
+    public function send(): void
+    {
+        header(sprintf('%s: %s', $this->name, $this->line()));
+    }
 }

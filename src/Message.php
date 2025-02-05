@@ -65,12 +65,9 @@ class Message implements MessageInterface
 
     public function withHeader(string $name, $value): MessageInterface
     {
+        $header = new Header($name, (array)$value);
         $clone = clone $this;
-        $clone->headers[$name] = $value;
-
-        if ($this instanceof Response && $this->body instanceof NonBufferedBody) {
-            header(sprintf("%s: %s", $name, $clone->headers[$name]->line()));
-        }
+        $clone->headers[] = $header;
 
         return $clone;
     }
@@ -81,17 +78,15 @@ class Message implements MessageInterface
         $clone = clone $this;
         $clone->headers[] = $new_header;
 
-        if ($this instanceof Response && $this->body instanceof NonBufferedBody) {
-            header(sprintf("%s: %s", $name, $clone->headers[$name]->line()));
-        }
-
         return $clone;
     }
 
     public function withoutHeader(string $name): MessageInterface
     {
         $clone = clone $this;
-        unset($clone->headers[$name]);
+        $clone->headers = array_filter($this->headers->all(), function($header) use ($name) {
+            return $header->name !== $name;
+        });
 
         return $clone;
     }
@@ -106,5 +101,10 @@ class Message implements MessageInterface
         $clone = clone $this;
         $clone->body = $body;
         return $clone;
+    }
+
+    public function __clone()
+    {
+        $this->headers = clone $this->headers;
     }
 }

@@ -19,13 +19,16 @@ class Request extends Message implements ServerRequestInterface
     public function __construct(
         protected string $method,
         protected UriInterface $uri,
-        protected HeadersInterface $headers,
+        HeadersInterface $headers,
         protected array $cookies,
         protected array $serverParams,
-        protected StreamInterface $body,
+        StreamInterface $body,
         protected ?array $uploadedFiles = []
     )
     {
+        $this->headers = $headers;
+        $this->body = $body;
+
         if (isset($this->serverParams['SERVER_PROTOCOL'])) {
             $this->protocolVersion = str_replace('HTTP/', '', $this->serverParams['SERVER_PROTOCOL']);
         }

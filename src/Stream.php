@@ -50,6 +50,17 @@ class Stream implements StreamInterface
      */
     protected ?StreamInterface $cache = null;
 
+    public function __construct(
+        $stream, 
+        bool $isPipe = false,
+        ?StreamInterface $cache = null
+    )
+    {
+        $this->stream = $stream;
+        $this->cache = $cache;
+        $this->isPipe = $isPipe;
+    }
+
     public function getMetadata(?string $key = null)
     {
         if (!$this->stream) return null;
@@ -117,6 +128,11 @@ class Stream implements StreamInterface
         }
 
         return $this->size;
+    }
+
+    public function getStream()
+    {
+        return $this->stream;
     }
 
     public function tell(): int
@@ -199,7 +215,7 @@ class Stream implements StreamInterface
     public function read(int $length): string
     {
         $data = false;
-
+        
         if ( $this->isReadable() && $this->stream && $length > 0 ) {
             $data = fread($this->stream, $length);
         }
@@ -222,7 +238,7 @@ class Stream implements StreamInterface
     public function write(string $string): int
     {
         $complete = false;
-
+        
         if ($this->isWritable() && $this->stream) {
             $complete = fwrite($this->stream, $string);
         }
@@ -294,15 +310,16 @@ class Stream implements StreamInterface
         return self::createFromResource($resource);
     }
 
-    public static function createFromResource($resource, ?StreamInterface $cache = null): StreamInterface
+    public static function createFromResource($resource, ?StreamInterface $cache = null, bool $isPipe = false): StreamInterface
     {
-        return new Stream($resource, $cache);
+        return new Stream($resource, $isPipe, $cache);
     }
 
-    public function createFromFile(
+    public static function createFromFile(
         string $filename,
         string $mode = 'r',
-        ?StreamInterface $cache = null
+        ?StreamInterface $cache = null,
+        bool $isPipe = false
     ): StreamInterface {
         set_error_handler(
             static function (int $errno, string $errstr) use ($filename, $mode): void {
@@ -314,7 +331,8 @@ class Stream implements StreamInterface
         );
 
         try {
-            $resource = fopen($filename, $mode);
+            if (FALSE === $isPipe) $resource = fopen($filename, $mode);
+            else $resource = popen($filename, $mode);
         } catch (\ValueError $exception) {
             throw new \RuntimeException("Unable to open $filename using mode $mode: " . $exception->getMessage());
         } finally {
@@ -327,6 +345,31 @@ class Stream implements StreamInterface
             );
         }
 
-        return new Stream($resource, $cache);
+        return new Stream($resource, $isPipe, $cache);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function pipe()
+    {
+        if (!$this->isReadable()) {
+            throw new \RuntimeException("Source stream is not readable");
+        }
+
+        ob_start();
+
+        fpassthru($this->stream);
+
+        $buffered = '';
+        while (0 < ob_get_level()) {
+            $buffered = ob_get_clean() . $buffered;
+        }
+
+        echo $buffered;
+
+        $this->close();
+
+        exit;
     }
 }

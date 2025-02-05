@@ -7,8 +7,9 @@ class Headers extends \ArrayObject implements HeadersInterface
     {
         $result = [];
 
+        /** @var \Clicalmani\Psr7\Header */
         foreach ($this as $header) {
-            $result[$header->name] = $header->value;
+            $result[$header->name] = $header->line();
         }
 
         return $result;
@@ -16,9 +17,9 @@ class Headers extends \ArrayObject implements HeadersInterface
 
     public function get(string $name) : ?HeaderInterface
     {
-        /** @var \Clicalmani\Psr7\HeaderInterface */
+        /** @var \Clicalmani\Psr7\Header */
         foreach ($this as $header) {
-            if ($header->name === $name) return $header;
+            if ($header->name === $name) return $header->value;
         }
 
         return null;
@@ -39,7 +40,7 @@ class Headers extends \ArrayObject implements HeadersInterface
         $headers = new self;
 
         foreach ($array as $key => $value) {
-            $headers[$key] = (array)$value;
+            $headers[] = new Header($key, (array)$value);
         }
 
         return $headers;
