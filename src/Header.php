@@ -15,7 +15,7 @@ class Header implements HeaderInterface
 
     public function __construct(string $name, ?array $value = [])
     {
-        $this->name = $name;
+        $this->name = strtolower($name);
         $this->value = $value;
     }
 
